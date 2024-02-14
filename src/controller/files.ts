@@ -4,6 +4,7 @@ import fs from "fs/promises";
 import type { UserList, User } from './types';
 import { nanoid } from 'nanoid';
 
+
 export const getAllData = async (
   req: express.Request,
   res: express.Response
@@ -72,5 +73,35 @@ export const copyFileData = async (req: express.Request, res: express.Response) 
     } catch (error) {
         Logging.error(error);
         return res.status(500).send('An error occurred when copying file');
+    }
+};
+
+export const createExcelFile = async (req: express.Request, res: express.Response) => {
+    try {
+        var xl = require('excel4node');
+        const wb = new xl.Workbook();
+        const ws = wb.addWorksheet('JSON User List');
+        const headingColumnNames = ["Name","City","Mobile","Id", "CreatedAt", "UpdatedAt"];
+        let headingColumnIndex = 1;
+        headingColumnNames.forEach(heading => { ws.cell(1, headingColumnIndex++).string(heading) });
+        let rowIndex = 2;
+        const data = await fs.readFile(__dirname + '/../files/user.json', {
+            encoding: 'utf8',
+        });
+        const allUsers: UserList = JSON.parse(data);
+        allUsers.users.forEach( record => {
+            let columnIndex = 1;
+            Object.keys(record ).forEach(columnName =>{
+                if(columnName === 'mobile') ws.cell(rowIndex,columnIndex++).number(record [columnName]);
+                else ws.cell(rowIndex,columnIndex++).string(record [columnName])
+            });
+            rowIndex++;
+        });
+        const file = `${__dirname}/../files/excel/jsonUserList.xlsx`;
+        wb.write(file);
+        return res.status(200).send('Excel file created & saved to server');
+    } catch (error) {
+        Logging.error(error);
+        return res.status(500).send('An error occurred when creating Excel file');
     }
 };
