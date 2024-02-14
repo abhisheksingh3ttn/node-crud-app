@@ -4,6 +4,7 @@
 * REST API principals
     * CRUD
     * HTTP methods
+    * File system
 
 ## Technologies
 * Node.js
